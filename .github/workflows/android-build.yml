@@ -3,7 +3,11 @@ name: Android Build
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
+    tags:
+      - 'v*'  # يتشغل تلقائياً عند رفع أي Tag يبدأ بـ v
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # يسمح بالتشغيل اليدوي
 
 jobs:
   build:
@@ -21,12 +25,35 @@ jobs:
     - name: Build with Gradle
       run: |
         chmod +x gradlew
-        ./gradlew clean assembleDebug --no-daemon --stacktrace
-      continue-on-error: true
+        ./gradlew assembleDebug --no-daemon --stacktrace
+      continue-on-error: true  # يستمر حتى لو فشل البناء
 
-    - name: Upload APK
+    - name: Compress project
+      run: |
+        cd ..
+        tar -czf Hh567-project.tar.gz Hh567/
+        mv Hh567-project.tar.gz Hh567/
+
+    - name: Upload APK (if exists)
       uses: actions/upload-artifact@v4
       with:
-        name: app-debug
-        path: nhterm/build/outputs/apk/debug/*.apk
+        name: apk-files
+        path: |
+          **/build/outputs/apk/**/*.apk
+          **/*.apk
       continue-on-error: true
+
+    - name: Upload project archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: project-archive
+        path: Hh567-project.tar.gz
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          Hh567-project.tar.gz
+          **/build/outputs/apk/**/*.apk
+        generate_release_notes: true
