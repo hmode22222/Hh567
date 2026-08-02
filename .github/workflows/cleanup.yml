@@ -1,0 +1,14 @@
+name: Cleanup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Cleanup old artifacts
+      uses: actions/delete-package-versions@v5
+      with:
+        package-name: 'app-debug'
+        min-versions-to-keep: 5
